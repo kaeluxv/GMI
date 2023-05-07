@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[91]:
+# In[132]:
 
 
 import torch
@@ -11,7 +11,7 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
 
-# In[92]:
+# In[137]:
 
 
 class Flatten(nn.Module):
@@ -51,7 +51,8 @@ class SCNN(nn.Module):
         self.feat_dim = 512
         self.num_classes = num_classes
         self.feature = nn.Sequential(
-            nn.Conv2d(1, 32, 7, stride=1, padding=1),
+            nn.Conv2d(1, 32, 7, stride=1, padding=3),
+            # nn.Conv2d(1, 32, 7, stride=1, padding=1),
             nn.BatchNorm2d(32),
             nn.LeakyReLU(0.2),
             nn.MaxPool2d(2, 2),
@@ -75,14 +76,19 @@ class SCNN(nn.Module):
         feature = self.feature(x)
         feature = feature.view(feature.size(0), -1)
         out = self.fc_layer(feature)
-        return [out]
+        return [feature, out]
 
 
-# In[93]:
+# In[134]:
 
 
 # Device 설정
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+if torch.cuda.is_available():
+    device = 'cuda'
+elif torch.backends.mps.is_available() :
+    device = 'mps' # m1
+else:
+    device = 'cpu'
 print("Device =", device)
 # Hyperparameters
 
@@ -105,7 +111,7 @@ print("Train data =", len(train_dataset))
 print("Test  data =", len(test_dataset))
 
 
-# In[94]:
+# In[130]:
 
 
 # 모델을 정의합니다
@@ -147,18 +153,16 @@ model.eval()
 
 # Test the model on the test dataset
 correct = 0
-total = 0
-for images, labels in test_loader:
-    # Forward pass
-    features, outputs = model(images)
-    _, predicted = torch.max(outputs.data, 1)
-    total += labels.size(0)
-    correct += (predicted == labels).sum().item()
-
-print('[MCNN] Accuracy on test set: %d %%' % (100 * correct / total))
+for data, target in test_loader:
+    data = data.to(device)
+    target = target.to(device)
+    _, output = model(data)
+    prediction = output.data.max(1)[1]
+    correct += prediction.eq(target.data).sum()
+print('[MCNN] Test set Accuracy : {:.2f}%'.format(100. * correct / len(test_loader.dataset)))
 
 
-# In[ ]:
+# In[138]:
 
 
 # 모델을 정의합니다
@@ -166,7 +170,7 @@ model = SCNN(num_classes=10).to(device)
 
 # 손실 함수와 옵티마이저를 정의합니다
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 
 # 모델을 학습합니다
 for epoch in range(num_epochs):
@@ -200,13 +204,17 @@ model.eval()
 
 # Test the model on the test dataset
 correct = 0
-total = 0
-for images, labels in test_loader:
-    # Forward pass
-    features, outputs = model(images)
-    _, predicted = torch.max(outputs.data, 1)
-    total += labels.size(0)
-    correct += (predicted == labels).sum().item()
+for data, target in test_loader:
+    data = data.to(device)
+    target = target.to(device)
+    _, output = model(data)
+    prediction = output.data.max(1)[1]
+    correct += prediction.eq(target.data).sum()
+print('[SCNN] Test set Accuracy : {:.2f}%'.format(100. * correct / len(test_loader.dataset)))
 
-print('[SCNN] Accuracy on test set: %d %%' % (100 * correct / total))
+
+# In[ ]:
+
+
+
 

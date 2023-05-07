@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[75]:
+# In[91]:
 
 
 import torch
@@ -11,7 +11,7 @@ import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
 
-# In[76]:
+# In[92]:
 
 
 class Flatten(nn.Module):
@@ -78,27 +78,34 @@ class SCNN(nn.Module):
         return [out]
 
 
-# In[77]:
+# In[93]:
 
 
 # Device 설정
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("Device =", device)
 # Hyperparameters
+
+learning_rate = 0.01
+momentum = 0.9
+weight_decay = 0.0001
+batch_size = 64
 num_epochs = 10
-learning_rate = 0.001
-batch_size = 32
 
 # 데이터를 다운로드하고 로드합니다
 train_dataset = datasets.MNIST(root='./data', train=True, transform=transforms.ToTensor(), download=True)
 test_dataset = datasets.MNIST(root='./data', train=False, transform=transforms.ToTensor(), download=True)
+# test_dataset = test_dataset[:len(train_dataset) * 0.9]
 
 # DataLoader를 만듭니다
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
 
+print("Train data =", len(train_dataset))
+print("Test  data =", len(test_dataset))
 
-# In[78]:
+
+# In[94]:
 
 
 # 모델을 정의합니다
@@ -106,7 +113,7 @@ model = MCNN(num_classes=10).to(device)
 
 # 손실 함수와 옵티마이저를 정의합니다
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay)
 
 # 모델을 학습합니다
 for epoch in range(num_epochs):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[132]:
+# In[159]:
 
 
 import torch
@@ -9,9 +9,10 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+import os
 
 
-# In[137]:
+# In[160]:
 
 
 class Flatten(nn.Module):
@@ -79,7 +80,7 @@ class SCNN(nn.Module):
         return [feature, out]
 
 
-# In[134]:
+# In[161]:
 
 
 # Device 설정
@@ -111,7 +112,7 @@ print("Train data =", len(train_dataset))
 print("Test  data =", len(test_dataset))
 
 
-# In[130]:
+# In[162]:
 
 
 # 모델을 정의합니다
@@ -143,10 +144,10 @@ for epoch in range(num_epochs):
                   .format(epoch+1, num_epochs, i+1, len(train_loader), loss.item()))
 
 # 모델의 dict_state를 저장합니다
-torch.save(model.state_dict(), 'mcnn_dict_state.pt')
+torch.save({'state_dict':model.state_dict()}, os.path.join("./", 'mcnn_dict_state.tar'))
 
 # Initialize MCNN model
-model.load_state_dict(torch.load('mcnn_dict_state.pt'))
+model.load_state_dict(torch.load('mcnn_dict_state.tar')['state_dict'])
 
 # Set model to evaluation mode
 model.eval()
@@ -162,7 +163,7 @@ for data, target in test_loader:
 print('[MCNN] Test set Accuracy : {:.2f}%'.format(100. * correct / len(test_loader.dataset)))
 
 
-# In[138]:
+# In[163]:
 
 
 # 모델을 정의합니다
@@ -194,10 +195,10 @@ for epoch in range(num_epochs):
                   .format(epoch+1, num_epochs, i+1, len(train_loader), loss.item()))
 
 # 모델의 dict_state를 저장합니다
-torch.save(model.state_dict(), 'scnn_dict_state.pt')
+torch.save({'state_dict':model.state_dict()}, os.path.join("./", 'scnn_dict_state.tar'))
 
 # Initialize SCNN model
-model.load_state_dict(torch.load('scnn_dict_state.pt'))
+model.load_state_dict(torch.load('scnn_dict_state.tar')['state_dict'])
 
 # Set model to evaluation mode
 model.eval()

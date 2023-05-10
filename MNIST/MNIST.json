@@ -1,10 +1,10 @@
 {
   "dataset":{
     "name":"MNIST",
-    "img_path":"./imgs/train",
+    "img_path":"./imgs/0_to_4",
     "gan_file_path":"./gan_list.txt",
-    "train_file_path":"./imgs/train_txt",
-    "test_file_path":"./imgs/train_txt",
+    "train_file_path":"./imgs/train_0_to_4",
+    "test_file_path":"./imgs/test_0_to_4",
     "img_type":"gray",
     "img_size":32,
     "model_name":"GAN",

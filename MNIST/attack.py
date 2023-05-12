@@ -3,7 +3,7 @@ import numpy as np
 import torch.nn as nn
 import torchvision.utils as tvls
 
-device = "cuda"
+device = "cuda:0"
 num_classes = 10
 log_path = "../attack_logs"
 os.makedirs(log_path, exist_ok=True)
@@ -38,7 +38,7 @@ def inversion(G, D, T, E, iden, lr=1e-2, momentum=0.9, lamda=100, iter_times=150
 			fake = G(z)
 			label = D(fake)
 			out = T(fake)[-1]
-			
+				
 			if z.grad is not None:
 				z.grad.data.zero_()
 
@@ -62,6 +62,7 @@ def inversion(G, D, T, E, iden, lr=1e-2, momentum=0.9, lamda=100, iter_times=150
 				fake_img = G(z.detach())
 				eval_prob = E(fake_img)[-1]
 				eval_iden = torch.argmax(eval_prob, dim=1).view(-1)
+				print("fake_img : ", fake_img)
 				acc = iden.eq(eval_iden.long()).sum().item() * 1.0 / bs
 				print("Iteration:{}\tPrior Loss:{:.2f}\tIden Loss:{:.2f}\tAttack Acc:{:.2f}".format(i+1, Prior_Loss_val, Iden_Loss_val, acc))
 			
@@ -93,34 +94,34 @@ def inversion(G, D, T, E, iden, lr=1e-2, momentum=0.9, lamda=100, iter_times=150
 	print("Acc:{:.2f}".format(acc))
 
 if __name__ == "__main__":
-	target_path = "./MNIST.json"
+	target_path = "./dict_state/mcnn_dict_state.tar"
 	
 	T = classify.MCNN(num_classes)
 	T = nn.DataParallel(T).cuda()
-    ckp_T = torch.load(target_path)['mcnn_state_dict']
-    utils.load_my_state_dict(T, ckp_T)
-
-	e_path = "./MNIST.json"
+	ckp_T = torch.load(target_path)['state_dict']
+	utils.load_my_state_dict(T, ckp_T)
+	
+	e_path = "./dict_state/scnn_dict_state.tar"
 	E = classify.SCNN(num_classes)
 	E = nn.DataParallel(E).cuda()
-	ckp_E = torch.load(e_path)['scnn_state_dict']
+	ckp_E = torch.load(e_path)['state_dict']
 	utils.load_my_state_dict(E, ckp_E)
 
-	g_path = "./MNIST.json"
+	g_path = "./Attack/attack_models/MNIST_G.tar"
 	G = generator.GeneratorMNIST()
 	G = nn.DataParallel(G).cuda()
-	ckp_G = torch.load(g_path)['generator_state_dict']
+	ckp_G = torch.load(g_path)['state_dict']
 	utils.load_my_state_dict(G, ckp_G)
 
-	d_path = "./MNIST.json"
+	d_path = "./Attack/attack_models/MNIST_D.tar"
 	D = discri.DGWGAN32()
 	D = nn.DataParallel(D).cuda()
-	ckp_D = torch.load(d_path)['discriminator_state_dict']
+	ckp_D = torch.load(d_path)['state_dict']
 	utils.load_my_state_dict(D, ckp_D)
 
 	iden = torch.zeros(5)
 	for i in range(5):
-	    iden[i] = i+5
+		iden[i] = i+5
 
 	inversion(G, D, T, E, iden)
 	

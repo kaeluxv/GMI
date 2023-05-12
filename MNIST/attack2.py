@@ -9,7 +9,7 @@ num_classes = 10
 log_path = "../attack_logs"
 os.makedirs(log_path, exist_ok=True)
 
-def inversion(G, D, T, E, iden, lr=1e-2, momentum=0.9, lamda=100, iter_times=1500, clip_range=1):
+def inversion(G, D, T, E, iden, lr=0.0001, momentum=0.9, lamda=100, iter_times=1500, clip_range=1):
 	iden = iden.view(-1).long().cuda()
 	criterion = nn.CrossEntropyLoss().cuda()
 	bs = iden.shape[0]
@@ -65,11 +65,12 @@ def inversion(G, D, T, E, iden, lr=1e-2, momentum=0.9, lamda=100, iter_times=150
 				eval_iden = torch.argmax(eval_prob, dim=1).view(-1)
 				acc = iden.eq(eval_iden.long()).sum().item() * 1.0 / bs   
 				print("Iteration:{}\tPrior Loss:{:.2f}\tIden Loss:{:.2f}\tAttack Acc:{:.2f}".format(i+1, Prior_Loss_val, Iden_Loss_val, acc))
+				#print("fake_img : ", fake_img)
 				root_path = "./Attack"
 				save_img_dir = os.path.join(root_path, "GMI_imgs")
 				os.makedirs(save_img_dir, exist_ok=True)
-				save_tensor_images(fake.detach(), os.path.join(save_img_dir, "attack_image1_{}.png".format(i)), nrow = 10)
-		fake = G(z)
+				save_tensor_images(fake_img.detach(), os.path.join(save_img_dir, "attack_image1_{}.png".format(i)), nrow = 10)
+
 
 		# save images
 #		root_path = "./Attack"
